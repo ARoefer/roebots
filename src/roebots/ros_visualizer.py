@@ -100,6 +100,13 @@ class ROSVisualizer(object):
 		marker.scale = ROS_SERIALIZER.serialize([radius * 2] * 3, Vector3Msg)
 		self.current_msg[namespace].markers.append(marker)
 
+	def draw_ellipsoid(self, namespace, pose, size, r=1, g=0, b=0, a=1, frame=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+		marker.type  = Marker.SPHERE
+		marker.pose  = ROS_SERIALIZER.serialize(pose, PoseMsg)
+		marker.scale = ROS_SERIALIZER.serialize(size, Vector3Msg)
+		self.current_msg[namespace].markers.append(marker)
+
 	def draw_cube(self, namespace, pose, scale, r=0, g=0, b=1, a=1, frame=None):
 		self.draw_shape(namespace, pose, scale, Marker.CUBE, r, g, b, a, frame)
 
