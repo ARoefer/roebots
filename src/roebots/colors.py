@@ -9,3 +9,7 @@ ANALOGOUS = np.array([['#0CE879', '#0CF23E', '#12DB00', '#70F20C', '#B8E80C'],
                       ['#670FFA', '#220DDE', '#1B3EF5', '#0D67DE', '#0FB2FA']])
 
 DISTINCT = np.hstack([ANALOGOUS.T[2], ANALOGOUS.T[4], ANALOGOUS.T[0], ANALOGOUS.T[3], ANALOGOUS.T[1]]).flatten()
+
+ANALOGOUS_RGB = np.asarray([int(s[1:], base=16) for s in ANALOGOUS.flatten()]).astype('>u4').view(np.uint8).reshape(ANALOGOUS.shape + (4,))[...,1:]
+
+DISTINCT_RGB = np.asarray([int(s[1:], base=16) for s in DISTINCT]).astype('>u4').view(np.uint8).reshape((len(DISTINCT), 4))[...,1:]
