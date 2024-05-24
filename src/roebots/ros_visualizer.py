@@ -24,7 +24,7 @@ def del_marker(Id, namespace):
 def blank_marker(Id, namespace, r, g, b, a, frame):
 	out = Marker()
 	out.ns = namespace
-	out.header.stamp = rospy.Time.now()
+	out.header.stamp = rospy.Time(0) # .now()
 	out.header.frame_id = frame
 	out.pose.orientation.w = 1
 	out.id = Id

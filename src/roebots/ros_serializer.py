@@ -76,7 +76,7 @@ def serialize_np_matrix_quat(mat):
     quat    = real_quat_from_matrix(mat[:3, :3])
     out     = QuaternionMsg(*quat)
     sq_norm = (np.asarray(quat) ** 2).sum()
-    if np.abs(sq_norm - 1.0) > 1e3:
+    if np.abs(sq_norm - 1.0) > 1e-3:
         raise Exception('Non-normalized quaternion')
     return out
 

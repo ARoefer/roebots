@@ -2,36 +2,34 @@ import numpy as np
 import os
 
 def real_quat_from_matrix(frame):
-    diag = np.diag(frame)[:3]
-    tr   = diag.sum()
-
-    i = diag.argmax()
-    s_coeff = np.full(3, -1) if tr <= 0 else np.ones(3)
-    s_coeff[i] = 1
-
-    S = np.sqrt(1.0 + (diag * s_coeff).sum()) * 2
-
-    # Lower and upper corner in order (1, 0), (2, 0), (2, 1)
-    #                                 (0, 1), (0, 2), (1, 2)
-    m = np.vstack((frame[np.tril_indices(3, -1)], 
-                   frame[np.triu_indices(3,  1)]))
-
-    if tr <= 0:
-        v_coeff = np.ones((2, 3))
-        v_coeff[1 - int(i == 1), 2 - i] = -1
-    else:
-        v_coeff = np.asarray(((1, -1, 1), (-1, 1, -1)))
-
-    temp_v = np.hstack(((m * v_coeff).sum(axis=0) / S, (0.25 * S,)))
+    tr = frame[0, 0] + frame[1, 1] + frame[2, 2]
 
     if tr > 0:
-        return (temp_v[2], temp_v[1], temp_v[0], temp_v[3])
-    elif i == 0:
-        return (temp_v[1], temp_v[2], temp_v[3], temp_v[0])
-    elif i == 1:
-        return (temp_v[0], temp_v[3], temp_v[2], temp_v[1])
-    
-    return (temp_v[3], temp_v[0], temp_v[1], temp_v[2])
+        S = np.sqrt(tr + 1.0) * 2
+        qw = 0.25 * S
+        qx = (frame[2, 1] - frame[1, 2]) / S
+        qy = (frame[0, 2] - frame[2, 0]) / S
+        qz = (frame[1, 0] - frame[0, 1]) / S
+    elif (frame[0, 0] > frame[1, 1]) and (frame[0, 0] > frame[2, 2]):
+        S = np.sqrt(1.0 + frame[0, 0] - frame[1, 1] - frame[2, 2]) * 2
+        qw = (frame[2, 1] - frame[1, 2]) / S
+        qx = 0.25 * S
+        qy = (frame[0, 1] + frame[1, 0]) / S
+        qz = (frame[0, 2] + frame[2, 0]) / S
+    elif frame[1, 1] > frame[2, 2]:
+        S = np.sqrt(1.0 + frame[1, 1] - frame[0, 0] - frame[2, 2]) * 2
+        qw = (frame[0, 2] - frame[2, 0]) / S
+        qx = (frame[0, 1] + frame[1, 0]) / S
+        qy = 0.25 * S
+        qz = (frame[1, 2] + frame[2, 1]) / S
+    else:
+        S = np.sqrt(1.0 + frame[2, 2] - frame[0, 0] - frame[1, 1]) * 2
+        qw = (frame[1, 0] - frame[0, 1]) / S
+        qx = (frame[0, 2] + frame[2, 0]) / S
+        qy = (frame[1, 2] + frame[2, 1]) / S
+        qz = 0.25 * S
+
+    return (qx, qy, qz, qw)
 
 
 _SEARCH_PATHS = set()
