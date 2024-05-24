@@ -12,4 +12,7 @@ DISTINCT = np.hstack([ANALOGOUS.T[2], ANALOGOUS.T[4], ANALOGOUS.T[0], ANALOGOUS.
 
 ANALOGOUS_RGB = np.asarray([int(s[1:], base=16) for s in ANALOGOUS.flatten()]).astype('>u4').view(np.uint8).reshape(ANALOGOUS.shape + (4,))[...,1:]
 
-DISTINCT_RGB = np.asarray([int(s[1:], base=16) for s in DISTINCT]).astype('>u4').view(np.uint8).reshape((len(DISTINCT), 4))[...,1:]
+DISTINCT_RGB   = np.asarray([int(s[1:], base=16) for s in DISTINCT]).astype('>u4').view(np.uint8).reshape((len(DISTINCT), 4))[..., 1:]
+DISTINCT_RGBA  = np.hstack((DISTINCT_RGB, 255 * np.ones((len(DISTINCT_RGB), 1), dtype=DISTINCT_RGB.dtype)))
+DISTINCT_RGBf  = DISTINCT_RGB / 255
+DISTINCT_RGBAf = DISTINCT_RGBA / 255
