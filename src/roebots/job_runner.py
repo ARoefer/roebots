@@ -22,11 +22,22 @@ import sys
 import time
 
 from subprocess import Popen
-
+from pathlib    import Path
 
 class JobRunner():
     def __init__(self, jobs, n_processes=100) -> None:
-        self.jobs      = jobs
+        self.jobs      = []
+        for j in jobs:
+            job = []
+            # Primitive expansion of paths with * in them
+            for a in j:
+                if '*' in a:
+                    p = Path(a)
+                    job += [str(f) for f in p.parent.glob(p.name)]
+                else:
+                    job.append(a)
+            self.jobs.append(job)
+
         self.processes = []
         self.n_proc    = n_processes
 
