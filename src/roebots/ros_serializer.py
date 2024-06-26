@@ -85,6 +85,9 @@ def serialize_np_4x4_pose(mat):
     return PoseMsg(serialize_3_point(mat[:, 3]), 
                    serialize_np_matrix_quat(mat[:3, :3]))
 
+def serialize_np_mat_point_vec(mat):
+    return serialize_np_4x1_matrix(mat.T[3] if mat.ndim == 2 else mat)
+
 def serialize_np_4x1_matrix(mat):
     mat = mat.flatten()
     if len(mat) < 4 or mat[3] != 0:
