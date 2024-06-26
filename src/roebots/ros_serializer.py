@@ -6,6 +6,7 @@ from geometry_msgs.msg import Pose        as PoseMsg, \
                               Vector3     as Vector3Msg, \
                               Quaternion  as QuaternionMsg, \
                               PoseStamped as PoseStampedMsg
+from std_msgs.msg      import ColorRGBA   as ColorRGBAMsg
 
 from .utils import real_quat_from_matrix
 
@@ -99,6 +100,11 @@ def serialize_3_point(iterable):
 def serialize_3_vector(iterable):
     return Vector3Msg(iterable[0], iterable[1], iterable[2])
 
+def serialize_color(iterable):
+    return ColorRGBAMsg(iterable[0], iterable[1], iterable[2], iterable[3] if len(iterable) >= 4 else 1.0)
+
+def serialize_str_color(hex_str):
+    return ColorRGBAMsg(*(np.asarray([int(s[-6:], base=16) for s in ANALOGOUS.flatten()]).astype('>u4').view(np.uint8) / 255))
 
 ROS_SERIALIZER = ROSSerializer()
 
@@ -108,3 +114,4 @@ ROS_SERIALIZER.add_serializer(serialize_np_4x1_matrix, {np.ndarray}, {PointMsg, 
 ROS_SERIALIZER.add_serializer(serialize_4_quaternion, {tuple, list}, {QuaternionMsg})
 ROS_SERIALIZER.add_serializer(serialize_3_point, {tuple, list}, {PointMsg})
 ROS_SERIALIZER.add_serializer(serialize_3_vector, {tuple, list}, {Vector3Msg})
+ROS_SERIALIZER.add_serializer(serialize_color, {tuple, list, np.ndarray}, {serialize_color})
