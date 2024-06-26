@@ -21,18 +21,15 @@ def del_marker(Id, namespace):
 	return out
 
 
-def blank_marker(Id, namespace, r, g, b, a, frame):
+def blank_marker(Id, namespace, color, frame):
 	out = Marker()
 	out.ns = namespace
 	out.header.stamp = rospy.Time(0) # .now()
 	out.header.frame_id = frame
 	out.pose.orientation.w = 1
 	out.id = Id
-	out.action  = Marker.ADD
-	out.color.r = r
-	out.color.g = g
-	out.color.b = b
-	out.color.a = a
+	out.action = Marker.ADD
+	out.color  = ROS_SERIALIZER.serialize(color, ColorRGBAMsg)
 	out.frame_locked = True
 	return out
 
@@ -93,25 +90,25 @@ class ROSVisualizer(object):
 			return self.world_frame
 		return frame
 
-	def draw_sphere(self, namespace, position, radius, r=1, g=0, b=0, a=1, frame=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_sphere(self, namespace, position, radius, color=(1, 0, 0, 1), frame=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = Marker.SPHERE
 		marker.pose.position = ROS_SERIALIZER.serialize(position, PointMsg)
 		marker.scale = ROS_SERIALIZER.serialize([radius * 2] * 3, Vector3Msg)
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_ellipsoid(self, namespace, pose, size, r=1, g=0, b=0, a=1, frame=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_ellipsoid(self, namespace, pose, size, color=(1, 0, 0, 1), frame=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type  = Marker.SPHERE
 		marker.pose  = ROS_SERIALIZER.serialize(pose, PoseMsg)
 		marker.scale = ROS_SERIALIZER.serialize(size, Vector3Msg)
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_cube(self, namespace, pose, scale, r=0, g=0, b=1, a=1, frame=None):
-		self.draw_shape(namespace, pose, scale, Marker.CUBE, r, g, b, a, frame)
+	def draw_cube(self, namespace, pose, scale, color=(1, 0, 0, 1), frame=None):
+		self.draw_shape(namespace, pose, scale, Marker.CUBE, color, frame)
 
-	def draw_points(self, namespace, pose, size, points, r=1, g=0, b=0, a=1, frame=None, colors=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_points(self, namespace, pose, size, points, color=(1, 0, 0, 1), frame=None, colors=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = Marker.POINTS
 		marker.pose = ROS_SERIALIZER.serialize(pose, PoseMsg)
 		marker.points = [ROS_SERIALIZER.serialize(p, PointMsg) for p in points]
@@ -121,8 +118,8 @@ class ROSVisualizer(object):
 		marker.scale.z = size
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_strip(self, namespace, pose, size, points, r=1, g=0, b=0, a=1, frame=None, colors=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_strip(self, namespace, pose, size, points, color=(1, 0, 0, 1), frame=None, colors=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = Marker.LINE_STRIP
 		marker.pose = ROS_SERIALIZER.serialize(pose, PoseMsg)
 		marker.points = [ROS_SERIALIZER.serialize(p, PointMsg) for p in points]
@@ -132,8 +129,8 @@ class ROSVisualizer(object):
 		marker.scale.z = size
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_lines(self, namespace, pose, size, points, r=1, g=0, b=0, a=1, frame=None, colors=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_lines(self, namespace, pose, size, points, color=(1, 0, 0, 1), frame=None, colors=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = Marker.LINE_LIST
 		marker.pose = ROS_SERIALIZER.serialize(pose, PoseMsg)
 		marker.points = [ROS_SERIALIZER.serialize(p, PointMsg) for p in points]
@@ -143,8 +140,8 @@ class ROSVisualizer(object):
 		marker.scale.z = size
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_cube_batch(self, namespace, pose, size, positions, r=1, g=0, b=0, a=1, frame=None, colors=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_cube_batch(self, namespace, pose, size, positions, color=(1, 0, 0, 1), frame=None, colors=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = Marker.CUBE_LIST
 		marker.pose = ROS_SERIALIZER.serialize(pose, PoseMsg)
 		marker.points = [ROS_SERIALIZER.serialize(p, PointMsg) for p in positions]
@@ -154,7 +151,7 @@ class ROSVisualizer(object):
 		marker.scale.z = size
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_poses(self, namespace, pose, size, line_width, poses, r=1, g=1, b=1, a=1, frame=None):
+	def draw_poses(self, namespace, pose, size, line_width, poses, color=(1, 1, 1, 1), frame=None):
 		positions = []
 		for p in poses:
 			pos = p[:, 3]
@@ -162,14 +159,14 @@ class ROSVisualizer(object):
 		colors = [(r, 0, 0, a), (r, 0, 0, a), 
 				  (0, g, 0, a), (0, g, 0, a), 
 				  (0, 0, b, a), (0, 0, b, a)] * len(poses)
-		self.draw_lines(namespace, pose, line_width, positions, 1,1,1,1, frame, colors)
+		self.draw_lines(namespace, pose, line_width, positions, (1, 1, 1, 1), frame, colors)
 
 
 	def draw_cylinder(self, namespace, pose, length, radius, r=0, g=0, b=1, a=1, frame=None):
-		self.draw_shape(namespace, pose, (radius * 2, radius * 2, length), Marker.CYLINDER, r, g, b, a, frame)
+		self.draw_shape(namespace, pose, (radius * 2, radius * 2, length), Marker.CYLINDER, color, frame)
 
-	def draw_arrow(self, namespace, start, end, r=1, g=1, b=1, a=1, width=0.01, frame=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_arrow(self, namespace, start, end, color=(1, 1, 1, 1), width=0.01, frame=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = Marker.ARROW
 		marker.scale.x = width
 		marker.scale.y = 2 * width
@@ -177,26 +174,26 @@ class ROSVisualizer(object):
                               ROS_SERIALIZER.serialize(end, PointMsg)])
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_vector(self, namespace, position, vector, r=1, g=1, b=1, a=1, width=0.01, frame=None):
-		self.draw_arrow(namespace, position, position + vector, r, g, b, a, width, frame)
+	def draw_vector(self, namespace, position, vector, color=(1, 1, 1, 1), width=0.01, frame=None):
+		self.draw_arrow(namespace, position, position + vector, color, width, frame)
 
-	def draw_text(self, namespace, position, text, r=1, g=1, b=1, a=1, height=0.08, frame=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_text(self, namespace, position, text, color=(1, 1, 1, 1), height=0.08, frame=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = Marker.TEXT_VIEW_FACING
 		marker.pose.position = ROS_SERIALIZER.serialize(position, PointMsg)
 		marker.scale.z = height
 		marker.text = text
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_shape(self, namespace, pose, scale, shape, r=1, g=1, b=1, a=1, frame=None):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_shape(self, namespace, pose, scale, shape, color=(1, 1, 1, 1), frame=None):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = shape
 		marker.pose = ROS_SERIALIZER.serialize(pose, PoseMsg)
 		marker.scale = ROS_SERIALIZER.serialize(scale, Vector3Msg)
 		self.current_msg[namespace].markers.append(marker)
 
-	def draw_mesh(self, namespace, pose, scale, resource, frame=None, r=0, g=0, b=0, a=0, use_mat=True):
-		marker = blank_marker(self.consume_id(namespace), namespace, r, g, b, a, self.__resframe(frame))
+	def draw_mesh(self, namespace, pose, scale, resource, frame=None, color=(1, 1, 1, 1), use_mat=True):
+		marker = blank_marker(self.consume_id(namespace), namespace, color, self.__resframe(frame))
 		marker.type = Marker.MESH_RESOURCE
 		marker.pose = ROS_SERIALIZER.serialize(pose, PoseMsg)
 		marker.scale = ROS_SERIALIZER.serialize(scale, Vector3Msg)
