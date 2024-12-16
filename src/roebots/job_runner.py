@@ -1,19 +1,17 @@
-"""
- Copyright (c) 2024 Adrian Röfer, Robot Learning Lab, University of Freiburg
+# Copyright (c) 2024 Adrian Röfer, Robot Learning Lab, University of Freiburg
 
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 
- You should have received a copy of the GNU General Public License
- along with this program. If not, see <https://www.gnu.org/licenses/>.
- """
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 
 import os
@@ -21,8 +19,10 @@ import signal
 import sys
 import time
 
-from subprocess import Popen
-from pathlib    import Path
+from multiprocessing import RLock
+from pathlib         import Path
+from subprocess      import Popen
+
 
 class JobRunner():
     def __init__(self, jobs, n_processes=100) -> None:
@@ -74,3 +74,52 @@ class JobRunner():
             print('Waiting for their completion...')
             for p in self.processes:
                 p.wait()
+
+
+class BatchJobState():
+    def __init__(self, jobs):
+        self._jobs = jobs
+        self._idx  = 0
+        self._lock = RLock()
+    
+    def pop_job(self):
+        with self._lock:
+            if self._idx >= len(self._jobs):
+                raise StopIteration(f'Job queue is empty')
+            
+            out = self._jobs[self._idx]
+            self._idx += 1
+            return out
+
+
+def pooled_job_processing(f_worker, jobs, n_workers, desc=None):
+    from threading import Thread
+    
+    if desc is not None:
+        from tqdm import tqdm
+        pbar = tqdm(total=len(jobs), desc=desc)
+    
+    state = BatchJobState(jobs)
+
+    def inner_worker(jobs):
+        while True:
+            try:
+                job = state.pop_job()
+
+                f_worker(*job)
+                if desc is not None:
+                    pbar.update(1)
+            except StopIteration:
+                break
+
+    workers = []
+    for _ in range(n_workers):
+        workers.append(Thread(target=inner_worker, args=(jobs,)))
+        workers[-1].start()
+
+    for w in workers:
+        w.join()
+
+    if desc is not None:
+        pbar.close()
+
