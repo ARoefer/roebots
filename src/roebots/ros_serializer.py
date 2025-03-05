@@ -3,14 +3,12 @@ try:
     import numpy as np
 
     from geometry_msgs.msg import Pose        as PoseMsg, \
-                                Point       as PointMsg, \
-                                Vector3     as Vector3Msg, \
-                                Quaternion  as QuaternionMsg, \
-                                PoseStamped as PoseStampedMsg
+                                  Point       as PointMsg, \
+                                  Vector3     as Vector3Msg, \
+                                  Quaternion  as QuaternionMsg, \
+                                  PoseStamped as PoseStampedMsg
 
     from .utils import real_quat_from_matrix
-except ModuleNotFoundError:
-    rospy = None
 
     class ROSSerializer(object):
         def __init__(self):
@@ -72,9 +70,11 @@ except ModuleNotFoundError:
         
                 for t in in_types:
                     self._type_deserializers[to][t] = f_des
+    
+    ROS_SERIALIZER = ROSSerializer()
+except ModuleNotFoundError:
+    rospy = None
 
-
-ROS_SERIALIZER = ROSSerializer()
 
 if rospy is not None:
     def serialize_np_matrix_quat(mat):
@@ -111,3 +111,5 @@ if rospy is not None:
     ROS_SERIALIZER.add_serializer(serialize_4_quaternion, {tuple, list}, {QuaternionMsg})
     ROS_SERIALIZER.add_serializer(serialize_3_point, {tuple, list}, {PointMsg})
     ROS_SERIALIZER.add_serializer(serialize_3_vector, {tuple, list}, {Vector3Msg})
+else:
+    ROS_SERIALIZER = None
