@@ -1,36 +1,10 @@
 import numpy as np
 import os
 
+from scipy.spatial.transform import Rotation as ScipyRotation
+
 def real_quat_from_matrix(frame):
-    tr = frame[0, 0] + frame[1, 1] + frame[2, 2]
-
-    if tr > 0:
-        S = np.sqrt(tr + 1.0) * 2
-        qw = 0.25 * S
-        qx = (frame[2, 1] - frame[1, 2]) / S
-        qy = (frame[0, 2] - frame[2, 0]) / S
-        qz = (frame[1, 0] - frame[0, 1]) / S
-    elif (frame[0, 0] > frame[1, 1]) and (frame[0, 0] > frame[2, 2]):
-        S = np.sqrt(1.0 + frame[0, 0] - frame[1, 1] - frame[2, 2]) * 2
-        qw = (frame[2, 1] - frame[1, 2]) / S
-        qx = 0.25 * S
-        qy = (frame[0, 1] + frame[1, 0]) / S
-        qz = (frame[0, 2] + frame[2, 0]) / S
-    elif frame[1, 1] > frame[2, 2]:
-        S = np.sqrt(1.0 + frame[1, 1] - frame[0, 0] - frame[2, 2]) * 2
-        qw = (frame[0, 2] - frame[2, 0]) / S
-        qx = (frame[0, 1] + frame[1, 0]) / S
-        qy = 0.25 * S
-        qz = (frame[1, 2] + frame[2, 1]) / S
-    else:
-        S = np.sqrt(1.0 + frame[2, 2] - frame[0, 0] - frame[1, 1]) * 2
-        qw = (frame[1, 0] - frame[0, 1]) / S
-        qx = (frame[0, 2] + frame[2, 0]) / S
-        qy = (frame[1, 2] + frame[2, 1]) / S
-        qz = 0.25 * S
-
-    return (qx, qy, qz, qw)
-
+    return ScipyRotation.from_matrix(frame[..., :3, :3]).as_quat()
 
 _SEARCH_PATHS = set()
 
