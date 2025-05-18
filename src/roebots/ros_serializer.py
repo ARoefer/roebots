@@ -7,8 +7,10 @@ try:
                                   Vector3     as Vector3Msg, \
                                   Quaternion  as QuaternionMsg, \
                                   PoseStamped as PoseStampedMsg
+    from std_msgs.msg import ColorRGBA as ColorRGBAMsg
 
-    from .utils import real_quat_from_matrix
+    from .utils  import real_quat_from_matrix
+    from .colors import ANALOGOUS
 
     class ROSSerializer(object):
         def __init__(self):
@@ -71,6 +73,9 @@ try:
                 for t in in_types:
                     self._type_deserializers[to][t] = f_des
     
+            for t in in_types:
+                self._type_deserializers[to][t] = f_des
+
     ROS_SERIALIZER = ROSSerializer()
 except ModuleNotFoundError:
     rospy = None
@@ -89,6 +94,9 @@ if rospy is not None:
         return PoseMsg(serialize_3_point(mat[:, 3]), 
                     serialize_np_matrix_quat(mat[:3, :3]))
 
+    def serialize_np_mat_point_vec(mat):
+        return serialize_np_4x1_matrix(mat.T[3] if mat.ndim == 2 else mat)
+
     def serialize_np_4x1_matrix(mat):
         mat = mat.flatten()
         if len(mat) < 4 or mat[3] != 0:
@@ -104,6 +112,12 @@ if rospy is not None:
     def serialize_3_vector(iterable):
         return Vector3Msg(iterable[0], iterable[1], iterable[2])
 
+    def serialize_color(iterable):
+        return ColorRGBAMsg(iterable[0], iterable[1], iterable[2], iterable[3] if len(iterable) >= 4 else 1.0)
+
+    def serialize_str_color(hex_str):
+        return ColorRGBAMsg(*(np.asarray([int(s[-6:], base=16) for s in ANALOGOUS.flatten()]).astype('>u4').view(np.uint8) / 255))
+
 
     ROS_SERIALIZER.add_serializer(serialize_np_matrix_quat, {np.ndarray}, {QuaternionMsg})
     ROS_SERIALIZER.add_serializer(serialize_np_4x4_pose, {np.ndarray}, {PoseMsg})
@@ -111,5 +125,6 @@ if rospy is not None:
     ROS_SERIALIZER.add_serializer(serialize_4_quaternion, {tuple, list}, {QuaternionMsg})
     ROS_SERIALIZER.add_serializer(serialize_3_point, {tuple, list}, {PointMsg})
     ROS_SERIALIZER.add_serializer(serialize_3_vector, {tuple, list}, {Vector3Msg})
+    ROS_SERIALIZER.add_serializer(serialize_color, {tuple, list, np.ndarray}, {serialize_color})
 else:
     ROS_SERIALIZER = None

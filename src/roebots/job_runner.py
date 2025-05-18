@@ -23,6 +23,8 @@ import time
 
 from subprocess import Popen
 from pathlib    import Path
+from threading  import RLock
+
 
 class JobRunner():
     def __init__(self, jobs, n_processes=100, exit_on_fail=False, report_failures=True) -> None:
@@ -94,3 +96,53 @@ class JobRunner():
                     print('================================\n  FAILURES:\n    {}'.format('\n    '.join([' '.join(t) for t in failures])))
                 else:
                     print('================================\n  No Failures!')
+
+
+# This exists because there is something wrong with Python's own job queue
+
+class BatchJobState():
+    def __init__(self, jobs):
+        self._jobs = jobs
+        self._idx  = 0
+        self._lock = RLock()
+    
+    def pop_job(self):
+        with self._lock:
+            if self._idx >= len(self._jobs):
+                raise StopIteration(f'Job queue is empty')
+            
+            out = self._jobs[self._idx]
+            self._idx += 1
+            return out
+
+
+def pooled_job_processing(f_worker, jobs, n_workers, desc=None):
+    from threading import Thread
+    
+    if desc is not None:
+        from tqdm import tqdm
+        pbar = tqdm(total=len(jobs), desc=desc)
+    
+    state = BatchJobState(jobs)
+
+    def inner_worker(jobs):
+        while True:
+            try:
+                job = state.pop_job()
+
+                f_worker(*job)
+                if desc is not None:
+                    pbar.update(1)
+            except StopIteration:
+                break
+
+    workers = []
+    for _ in range(n_workers):
+        workers.append(Thread(target=inner_worker, args=(jobs,)))
+        workers[-1].start()
+
+    for w in workers:
+        w.join()
+
+    if desc is not None:
+        pbar.close()
