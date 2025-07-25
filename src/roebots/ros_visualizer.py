@@ -223,3 +223,4 @@ except ImportError:
     class ROSVisualizer(object):
         def __init__(self, *args, **kwargs):
             raise ImportError("ROSVisualizer requires ROS to be installed and sourced. Please install ROS and source your workspace before using this class.")
+        
