@@ -125,6 +125,6 @@ if rospy is not None:
     ROS_SERIALIZER.add_serializer(serialize_4_quaternion, {tuple, list}, {QuaternionMsg})
     ROS_SERIALIZER.add_serializer(serialize_3_point, {tuple, list}, {PointMsg})
     ROS_SERIALIZER.add_serializer(serialize_3_vector, {tuple, list}, {Vector3Msg})
-    ROS_SERIALIZER.add_serializer(serialize_color, {tuple, list, np.ndarray}, {serialize_color})
+    ROS_SERIALIZER.add_serializer(serialize_color, {tuple, list, np.ndarray}, {ColorRGBAMsg})
 else:
     ROS_SERIALIZER = None
